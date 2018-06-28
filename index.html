@@ -35,7 +35,7 @@ d3.json("http://localhost:8000/CTA_New.json", function(error, lines) {
           .attr("fill", 'none')
           .attr("stroke","black");
 
-  d3.json("http://localhost:8000/hour_train.json", function(error, trains) {
+  d3.json("hour_train.json", function(error, trains) {
 
     var count = 0
     var interval = 15
