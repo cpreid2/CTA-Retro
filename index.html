@@ -17,7 +17,7 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-d3.json("http://localhost:8000/CTA_New.json", function(error, lines) {
+d3.json("CTA_New.json", function(error, lines) {
   if (error) return console.error(error);
   console.log(lines);
 
