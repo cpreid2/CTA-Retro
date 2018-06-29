@@ -2,12 +2,83 @@
 <meta charset="utf-8">
 <style>
 
-/* CSS */
+.d3-slider {
+    position: relative;
+    font-family: Verdana,Arial,sans-serif;
+    font-size: 1.1em;
+    border: 1px solid #aaaaaa;
+    z-index: 2;
+}
+
+.d3-slider-horizontal {
+    height: .8em;
+}
+
+.d3-slider-vertical {
+    width: .8em;
+    height: 100px;
+}
+
+.d3-slider-handle {
+    position: absolute;
+    width: 1.2em;
+    height: 1.2em;
+    border: 1px solid #d3d3d3;
+    border-radius: 4px;
+    background: #eee;
+    background: linear-gradient(to bottom, #eee 0%, #ddd 100%);
+    z-index: 3;
+}
+
+.d3-slider-handle:hover {
+    border: 1px solid #999999;
+}
+
+.d3-slider-horizontal .d3-slider-handle {
+    top: -.3em;
+    margin-left: -.6em;
+}
+
+.d3-slider-axis {
+    position: relative;
+    z-index: 1;
+}
+
+.d3-slider-axis-bottom {
+    top: .8em;
+}
+
+.d3-slider-axis-right {
+    left: .8em;
+}
+
+.d3-slider-axis path {
+    stroke-width: 0;
+    fill: none;
+}
+
+.d3-slider-axis line {
+    fill: none;
+    stroke: #aaa;
+    shape-rendering: crispEdges;
+}
+
+.d3-slider-axis text {
+    font-size: 11px;
+}
+
+.d3-slider-vertical .d3-slider-handle {
+    left: -.25em;
+    margin-left: 0;
+    margin-bottom: -.6em;
+}
+
 
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="d3.slider.js"></script>
 <script>
 
 var width = 500,
@@ -16,6 +87,8 @@ var width = 500,
 var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
+
+var slider = d3.select("body").append('div').attr('id','slider1').attr("width", width-100);
 
 d3.json("CTA_New.json", function(error, lines) {
   if (error) return console.error(error);
@@ -38,7 +111,7 @@ d3.json("CTA_New.json", function(error, lines) {
   d3.json("hour_train.json", function(error, trains) {
 
     var count = 0
-    var interval = 15
+    var interval = 10
     svg.selectAll("circle")
       .data(trains[count])
       .enter()
@@ -47,36 +120,31 @@ d3.json("CTA_New.json", function(error, lines) {
       .attr("cy", function(d){return projection([d.lon,d.lat])[1]})
       .attr("r", 4)
       .style("fill", "red");
+          //d3.timer(makeCallback(count), interval);
+          d3.select('#slider1').call(
+              d3.slider()
+              .min(0)
+              .max(360)
+              .step(1)
+              .axis(true).on("slide", function(evt, value) {
+                svg.selectAll("circle")
+                    .remove()
 
-    var makeCallback = function(count) {
-          // note that we're returning a new callback function each time
-          return function() {
-
-            svg.selectAll("circle")
-                //.transition().duration(5).attr("r", 0)
-                .remove()
-
-            svg.selectAll("circle")
-              .data(trains[count])
-              .enter()
-              .append('circle')
-              .attr("cx", function(d){return projection([d.lon,d.lat])[0]})
-              .attr("cy", function(d){return projection([d.lon,d.lat])[1]})
-              .attr("r", 4)
-              .style("fill", "red");
-
-              d3.timer(makeCallback(count+1), interval);
-              return true;
-          }
-
-        };
-          d3.timer(makeCallback(count), interval);
-
-      })
+                svg.selectAll("circle")
+                  .data(trains[value])
+                  .enter()
+                  .append('circle')
+                  .attr("cx", function(d){return projection([d.lon,d.lat])[0]})
+                  .attr("cy", function(d){return projection([d.lon,d.lat])[1]})
+                  .attr("r", 4)
+                  .style("fill", "red");
+          })
+        );
 
 });
-
+});
 //Loop through each minute
 // For each minute, display each circle and remove previous set of circles
 
 </script>
+</body>
