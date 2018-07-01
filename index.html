@@ -4,8 +4,8 @@
 
 .d3-slider {
     position: relative;
-    font-family: Verdana,Arial,sans-serif;
-    font-size: 1.1em;
+    font-family: Helvetica Neue,Arial,sans-serif;
+    font-size: 0.75em;
     border: 1px solid #aaaaaa;
     z-index: 2;
 }
@@ -16,7 +16,7 @@
 
 .d3-slider-vertical {
     width: .8em;
-    height: 100px;
+    height: 50px;
 }
 
 .d3-slider-handle {
@@ -31,7 +31,7 @@
 }
 
 .d3-slider-handle:hover {
-    border: 1px solid #999999;
+    border: 2px solid #999999;
 }
 
 .d3-slider-horizontal .d3-slider-handle {
@@ -82,23 +82,96 @@
 <script>
 
 var width = 500,
-    height = 750;
+    height = 700;
 
-var svg = d3.select("body").append("svg")
+var div = d3.select("body").append("div")
+        .style('width','500px')
+        .style('margin-left','auto')
+        .style('margin-right','auto');
+
+// Create SVG where interaction will live
+var svg = d3.select("div").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-var slider = d3.select("body").append('div').attr('id','slider1').attr("width", width-100);
+var loop = d3.select("svg").append("svg")
+        .attr("width", 200)
+        .attr("height", 200);
 
+var myText =  svg.append("text")
+    .attr("y", 70)//magic number here
+    .attr("x", 25)
+    .attr('text-anchor', 'right')
+    .style('font-family','Helvetica Neue')
+    .style('font-weight','bold')
+    .style('letter-spacing','-1px')
+    .style('font-size','20px')
+    .text("CTA Train Activity");
+
+
+var Datetime =  svg.append("text")
+        .attr("y", 95)//magic number here
+        .attr("x", 25)
+        .attr('text-anchor', 'right')
+        .style('font-family','Helvetica Neue')
+        .style('font-size','18px')
+        .text("June 30 2018");
+
+// Create placeholder for slider
+var slider = d3.select("div").append('div')
+    .attr('id','slider1')
+    .style('width','500px');
+
+var axis = d3.select("body").append("div")
+    .style('width','500px')
+    .style('margin-left','auto')
+    .style('margin-right','auto');
+
+var axis_svg = axis.append("svg")
+        .attr("width", width+20)
+        .attr("height", 50);
+
+var myText =  axis_svg.append("text")
+            .attr("y", 20)//magic number here
+            .attr("x", width/2)
+            .attr('text-anchor', 'center')
+            .style('font-family','Helvetica Neue')
+            .style('font-weight','bold')
+            .style('letter-spacing','-1px')
+            .style('font-size','12px')
+            .text("Noon");
+
+var myText =  axis_svg.append("text")
+            .attr("y", 20)//magic number here
+            .attr("x", width/4)
+            .attr('text-anchor', 'center')
+            .style('font-family','Helvetica Neue')
+            .style('font-weight','bold')
+            .style('letter-spacing','-1px')
+            .style('font-size','12px')
+            .text("6 AM");
+
+var myText =  axis_svg.append("text")
+                                    .attr("y", 20)//magic number here
+                                    .attr("x", width / 2 + width/4)
+                                    .attr('text-anchor', 'center')
+                                    .style('font-family','Helvetica Neue')
+                                    .style('font-weight','bold')
+                                    .style('letter-spacing','-1px')
+                                    .style('font-size','12px')
+                                    .text("6 PM");
+
+// Read in the CTA Line Map Coordinate JSON
 d3.json("CTA_New.json", function(error, lines) {
   if (error) return console.error(error);
-  console.log(lines);
 
+// Create a projection and scale it to the center of the CTA lines
   var projection = d3.geo.mercator()
-      .center([-87.62946739887555,41.88546497323761])
-      .scale(90000)
+      .center([-87.62,41.895])
+      .scale(80000)
       .translate([width - 50,height - 340]);
 
+// Fill in the lines for each path object
   var path = d3.geo.path()
       .projection(projection);
 
@@ -108,10 +181,49 @@ d3.json("CTA_New.json", function(error, lines) {
           .attr("fill", 'none')
           .attr("stroke","black");
 
-  d3.json("hour_train.json", function(error, trains) {
 
+function handleMouseOver(d, i) {
+                d3.select(this).attr({
+                  r: 7
+                });
+
+                var Destination =  svg.append("text")
+                    .attr("y", height-140)//magic number here
+                    .attr("x", 40)
+                    .attr("class","traininfo")
+                    .attr('text-anchor', 'right')
+                    .style('font-family','Helvetica Neue')
+                    .style('font-weight','bold')
+                    .style('letter-spacing','-1px')
+                    .style('font-size','14px')
+                    .text(function() {return 'Destination:  ' + d.destN});
+
+
+                    var Next =  svg.append("text")
+                        .attr("y", height-120)//magic number here
+                        .attr("x", 40)
+                        .attr("class","traininfo")
+                        .attr('text-anchor', 'right')
+                        .style('font-family','Helvetica Neue')
+                        .style('font-weight','bold')
+                        .style('letter-spacing','-1px')
+                        .style('font-size','14px')
+                        .text(function() {return 'Next Station:  ' + d.nextSt});
+              }
+
+function handleMouseOut(d, i) {
+                d3.select(this).attr({
+                  r:3.5
+                });
+
+                d3.selectAll(".traininfo").remove()
+              }
+
+// Read in the 10 second train data
+  d3.json("Half_Hour.json", function(error, trains) {
+
+    // Create initial map on load
     var count = 0
-    var interval = 10
     svg.selectAll("circle")
       .data(trains[count])
       .enter()
@@ -119,16 +231,21 @@ d3.json("CTA_New.json", function(error, lines) {
       .attr("cx", function(d){return projection([d.lon,d.lat])[0]})
       .attr("cy", function(d){return projection([d.lon,d.lat])[1]})
       .attr("r", 4)
-      .style("fill", "red");
-          //d3.timer(makeCallback(count), interval);
+      .style("fill", function(d){return d.color});
+
+          // Make the slider callback
+          // When the slider is moved, call the function below:
+            // 1. Remove the existing dots first
+            // 2. Add new dots based on the value of the slider
           d3.select('#slider1').call(
               d3.slider()
               .min(0)
-              .max(360)
+              .max(850)
               .step(1)
-              .axis(true).on("slide", function(evt, value) {
+              .axis(false).on("slide", function(evt, value) {
+
                 svg.selectAll("circle")
-                    .remove()
+                  .remove()
 
                 svg.selectAll("circle")
                   .data(trains[value])
@@ -137,14 +254,15 @@ d3.json("CTA_New.json", function(error, lines) {
                   .attr("cx", function(d){return projection([d.lon,d.lat])[0]})
                   .attr("cy", function(d){return projection([d.lon,d.lat])[1]})
                   .attr("r", 4)
-                  .style("fill", "red");
+                  .on("mouseover", handleMouseOver)
+                  .on("mouseout", handleMouseOut)
+                  .style("fill", function(d){return d.color});
+
           })
         );
 
 });
 });
-//Loop through each minute
-// For each minute, display each circle and remove previous set of circles
 
 </script>
 </body>
